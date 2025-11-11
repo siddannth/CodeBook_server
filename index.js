@@ -1,10 +1,20 @@
 import express from "express";
 import jsonServer from "json-server";
 import auth from "json-server-auth";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const server = express();
 
-// CORS
+// --- Resolve correct path to db.json ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Adjust this if your db.json is NOT inside a "data" folder
+const dbFile = path.join(__dirname, "data", "db.json");
+console.log("Using DB file:", dbFile);
+
+// --- CORS ---
 server.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
@@ -23,30 +33,30 @@ server.use((req, res, next) => {
   next();
 });
 
-// json-server + db.json
-const router = jsonServer.router("./data/db.json");
+// --- json-server setup ---
+const router = jsonServer.router(dbFile);
 const middlewares = jsonServer.defaults();
 
-// this is your routes.json, inlined:
-const routes = {
-  "/products*": "/444/",
-  "/featured_products*": "/444/",
-  "/orders*": "/660/",
-  "/users*": "/600/"
-};
-
-const rules = auth.rewriter(routes);
+// same rules you had originally
+const rules = auth.rewriter({
+  products: 444,
+  featured_products: 444,
+  orders: 660,
+  users: 600,
+});
 
 // expose db for json-server-auth
 server.db = router.db;
 
-// json-server middlewares (logger, static, etc.)
+// json-server middlewares
 server.use(middlewares);
 
-// mount everything under /api
-server.use("/api", rules);
-server.use("/api", auth);
-server.use("/api", router);
+// auth + rules
+server.use(rules);
+server.use(auth);
+
+// resources (products, orders, users, login, register, etc.)
+server.use(router);
 
 const PORT = process.env.PORT || 8000;
 
