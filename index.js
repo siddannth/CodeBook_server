@@ -1,7 +1,6 @@
 import express from "express";
 import jsonServer from "json-server";
 import auth from "json-server-auth";
-import fs from "fs";
 
 const server = express();
 
@@ -28,14 +27,20 @@ server.use((req, res, next) => {
 const router = jsonServer.router("./data/db.json");
 const middlewares = jsonServer.defaults();
 
-// load your routes.json
-const routes = JSON.parse(fs.readFileSync("./routes.json", "utf-8"));
+// this is your routes.json, inlined:
+const routes = {
+  "/products*": "/444/",
+  "/featured_products*": "/444/",
+  "/orders*": "/660/",
+  "/users*": "/600/"
+};
+
 const rules = auth.rewriter(routes);
 
-// expose db (json-server-auth uses this)
+// expose db for json-server-auth
 server.db = router.db;
 
-// standard json-server middlewares
+// json-server middlewares (logger, static, etc.)
 server.use(middlewares);
 
 // mount everything under /api
